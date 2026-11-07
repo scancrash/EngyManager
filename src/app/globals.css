@@ -14,7 +14,9 @@
   --input: #fff6c2; /* light yellow = editable */
   --wp-bg: #e9eef7;
   --task-bg: #f3f2ee;
-  --accent: #2a78d6;
+  --accent: #ff5000; /* Kintiga orange */
+  --brand: #360032; /* Kintiga deep purple */
+  --brand-2: #4d0f48;
   /* series: sold / estimated / actual */
   --s-sold: #2a78d6;
   --s-est: #eb6834;
@@ -36,7 +38,7 @@
     --input: #4a4420;
     --wp-bg: #1f2735;
     --task-bg: #232321;
-    --accent: #3987e5;
+    --accent: #ff5000;
     --s-sold: #3987e5;
     --s-est: #d95926;
     --s-actual: #199e70;
@@ -57,7 +59,7 @@
   --input: #4a4420;
   --wp-bg: #1f2735;
   --task-bg: #232321;
-  --accent: #3987e5;
+  --accent: #ff5000;
   --s-sold: #3987e5;
   --s-est: #d95926;
   --s-actual: #199e70;

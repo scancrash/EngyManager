@@ -16,5 +16,8 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   // Everything except the login page, the login/logout endpoints and static assets.
-  matcher: ["/((?!login|api/login|api/logout|_next/static|_next/image|favicon.ico).*)"],
+  // The logo and icon are public brand files and must load on the login page too.
+  matcher: [
+    "/((?!login|api/login|api/logout|_next/static|_next/image|favicon.ico|icon.png|kintiga-logo.png).*)",
+  ],
 };
