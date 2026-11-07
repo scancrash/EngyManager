@@ -1,18 +1,20 @@
 "use client";
 
 import { ROLE_IDS, ROLE_NAMES, type Project } from "@/lib/types";
-import { seedProject } from "@/lib/seed";
+import { blankProject } from "@/lib/seed";
 import NumInput from "./NumInput";
 
 export default function SettingsPanel({
   project,
   update,
   replace,
+  onDelete,
   onClose,
 }: {
   project: Project;
   update: (fn: (d: Project) => void) => void;
   replace: (p: Project) => void;
+  onDelete: () => void;
   onClose: () => void;
 }) {
   return (
@@ -29,6 +31,16 @@ export default function SettingsPanel({
             Close
           </button>
         </div>
+
+        <label className="mb-4 block text-sm">
+          Project name
+          <input
+            className="cell-input mt-1 !py-1.5"
+            aria-label="Project name"
+            value={project.name}
+            onChange={(e) => update((d) => { d.name = e.target.value; })}
+          />
+        </label>
 
         <label className="mb-4 flex items-center justify-between gap-3 text-sm">
           <span>Working hours per day (converts Sold Days to Sold Hours)</span>
@@ -62,17 +74,27 @@ export default function SettingsPanel({
           </tbody>
         </table>
 
-        <div className="mt-8 border-t border-line pt-4">
+        <div className="mt-8 flex flex-wrap gap-2 border-t border-line pt-4">
           <button
             className="rounded border border-line px-3 py-1.5 text-sm text-[color:var(--crit)] hover:bg-task"
             onClick={() => {
-              if (window.confirm("Delete ALL data in this browser and start over? Export a backup first if unsure.")) {
-                replace(seedProject());
-                onClose();
-              }
+              if (!window.confirm(`Clear all work packages and tasks in "${project.name}"? Rates are kept. Export a backup first if unsure.`)) return;
+              const fresh = blankProject(project.name);
+              replace({ ...fresh, settings: project.settings });
+              onClose();
             }}
           >
-            Reset all data
+            Clear this project
+          </button>
+          <button
+            className="rounded border border-line px-3 py-1.5 text-sm text-[color:var(--crit)] hover:bg-task"
+            onClick={() => {
+              if (!window.confirm(`Delete the project "${project.name}" permanently? Export a backup first if unsure.`)) return;
+              onDelete();
+              onClose();
+            }}
+          >
+            Delete this project
           </button>
         </div>
       </aside>

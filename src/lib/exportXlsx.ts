@@ -8,7 +8,7 @@ import {
   wpTotals,
   wpWbs,
 } from "./calc";
-import { normalizeProject } from "./store";
+import { normalizeProject } from "./workspace";
 
 const DATA_SHEET = "_data";
 const CHUNK = 30000; // Excel cells hold at most 32,767 characters

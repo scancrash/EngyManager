@@ -41,8 +41,19 @@ export function seedProject(): Project {
   task.roles.juniorAnalyst.soldDays = 5;
   task.roles.researchAnalyst.soldDays = 2;
   return {
-    name: "New project",
+    id: uid(),
+    name: "My first project",
     settings: { hoursPerDay: 8, rates: { ...DEFAULT_RATES } },
     wps: [{ id: uid(), title: "Work package 1", tasks: [task] }],
+  };
+}
+
+/** An empty project: one work package with one blank task, default rates. */
+export function blankProject(name = "New project"): Project {
+  return {
+    id: uid(),
+    name,
+    settings: { hoursPerDay: 8, rates: { ...DEFAULT_RATES } },
+    wps: [{ id: uid(), title: "Work package 1", tasks: [newTask("Task 1.1")] }],
   };
 }

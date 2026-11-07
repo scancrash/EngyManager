@@ -14,7 +14,8 @@ separate views of the money: **sold** (customer commitment), **estimated** (inte
   analytics on it. There is a "Show as table" view of the same numbers.
 - **Rates / Settings:** hours per day (default 8) and the seven bill rates. Rates are not shown in
   the table, only used by the formulas.
-- **Export / Import:** Excel (`.xlsx`) and JSON backup. Import accepts files exported by this app.
+- **Several projects:** switch between projects in the header, add one with **+ New project**, and rename, clear or delete the current one in Rates / Settings. Each project has its own rates and hours per day.
+- **Export / Import:** Excel (`.xlsx`) and JSON backup of the current project. Import accepts files exported by this app and adds them as a new project, so nothing is overwritten.
 - **Login:** one email + password.
 
 ### Formulas

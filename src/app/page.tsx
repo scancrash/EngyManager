@@ -5,12 +5,13 @@ import Analytics from "@/components/Analytics";
 import SettingsPanel from "@/components/SettingsPanel";
 import Tracker, { type Selection } from "@/components/Tracker";
 import { exportJson, exportXlsx, importFile } from "@/lib/exportXlsx";
-import { useProject } from "@/lib/store";
+import { useWorkspace } from "@/lib/store";
 
 const SPLIT_KEY = "engymanager.split.v1";
 
 export default function Home() {
-  const { project, update, replace, ready } = useProject();
+  const { project, projects, update, replace, addProject, selectProject, deleteProject, ready } =
+    useWorkspace();
   const [selection, setSelection] = useState<Selection>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [tab, setTab] = useState<"table" | "analytics">("table");
@@ -76,12 +77,32 @@ export default function Home() {
   return (
     <div className="flex h-screen flex-col">
       <header className="flex flex-wrap items-center gap-2 border-b border-line bg-[color:var(--surface)] px-3 py-2">
-        <input
-          aria-label="Project name"
-          className="min-w-[10rem] flex-1 rounded border border-transparent bg-transparent px-2 py-1 text-lg font-semibold hover:border-line focus:border-line"
-          value={project.name}
-          onChange={(e) => update((d) => { d.name = e.target.value; })}
-        />
+        <select
+          aria-label="Project"
+          className="min-w-[10rem] max-w-[22rem] flex-1 rounded border border-line bg-transparent px-2 py-1 text-lg font-semibold"
+          value={project.id}
+          onChange={(e) => {
+            selectProject(e.target.value);
+            setSelection(null);
+          }}
+        >
+          {projects.map((p) => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
+        <button
+          className={btn}
+          onClick={() => {
+            const name = window.prompt("Name of the new project:", `Project ${projects.length + 1}`);
+            if (name === null) return;
+            addProject(name.trim() || `Project ${projects.length + 1}`);
+            setSelection(null);
+            setTab("table");
+          }}
+        >
+          + New project
+        </button>
+        <span className="flex-1" />
         <button className={btn} onClick={() => setShowSettings(true)}>Rates / Settings</button>
         <button className={btn} disabled={busy} onClick={() => run(() => exportXlsx(project))}>Export Excel</button>
         <button className={btn} onClick={() => exportJson(project)}>Backup (JSON)</button>
@@ -95,11 +116,11 @@ export default function Home() {
             const f = e.target.files?.[0];
             e.target.value = "";
             if (!f) return;
-            if (!window.confirm("Importing replaces everything currently in the tracker. Continue?")) return;
             run(async () => {
-              replace(await importFile(f));
+              const imported = await importFile(f);
+              addProject(undefined, imported);
               setSelection(null);
-              setMsg("Import complete.");
+              setMsg(`Imported as a new project: ${imported.name}`);
             });
           }}
         />
@@ -161,6 +182,10 @@ export default function Home() {
           project={project}
           update={update}
           replace={replace}
+          onDelete={() => {
+            deleteProject(project.id);
+            setSelection(null);
+          }}
           onClose={() => setShowSettings(false)}
         />
       )}

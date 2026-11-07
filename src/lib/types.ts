@@ -71,6 +71,7 @@ export interface Settings {
 }
 
 export interface Project {
+  id: string;
   name: string;
   settings: Settings;
   wps: WorkPackage[];

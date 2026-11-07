@@ -1,70 +1,38 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { newTask, seedProject, uid } from "./seed";
-import { DEFAULT_RATES, ROLE_IDS, type Project } from "./types";
+import { blankProject, seedProject } from "./seed";
+import { normalizeProject, parseWorkspace, type Workspace } from "./workspace";
+import type { Project } from "./types";
 
-const KEY = "engymanager.project.v1";
+const KEY = "engymanager.workspace.v2";
+const LEGACY_KEY = "engymanager.project.v1";
 
-/** Fill any missing fields so older/hand-edited data never crashes the UI. */
-export function normalizeProject(raw: unknown): Project {
-  const base = seedProject();
-  const p = (raw ?? {}) as Partial<Project>;
-  const s = p.settings;
-  const hoursPerDay =
-    typeof s?.hoursPerDay === "number" && s.hoursPerDay > 0 ? s.hoursPerDay : 8;
-  const rates = { ...DEFAULT_RATES };
-  for (const r of ROLE_IDS) {
-    const v = s?.rates?.[r];
-    if (typeof v === "number" && Number.isFinite(v) && v >= 0) rates[r] = v;
-  }
-  const wps = Array.isArray(p.wps)
-    ? p.wps.map((w) => ({
-        id: w?.id || uid(),
-        title: w?.title ?? "",
-        tasks: Array.isArray(w?.tasks)
-          ? w.tasks.map((t) => {
-              const nt = newTask(t?.title ?? "");
-              return {
-                ...nt,
-                ...t,
-                id: t?.id || nt.id,
-                roles: Object.fromEntries(
-                  ROLE_IDS.map((r) => [r, { ...nt.roles[r], ...(t?.roles?.[r] ?? {}) }]),
-                ) as typeof nt.roles,
-              };
-            })
-          : [],
-      }))
-    : base.wps;
-  return {
-    name: typeof p.name === "string" ? p.name : base.name,
-    settings: { hoursPerDay, rates },
-    wps,
-  };
-}
+export { normalizeProject };
 
-function load(): Project {
+function load(): Workspace {
   try {
-    const s = window.localStorage.getItem(KEY);
-    if (s) return normalizeProject(JSON.parse(s));
+    return parseWorkspace(window.localStorage.getItem(KEY), window.localStorage.getItem(LEGACY_KEY));
   } catch {
-    /* storage unavailable or corrupt: start fresh */
+    /* storage unavailable: start fresh */
   }
-  return seedProject();
+  return parseWorkspace(null, null);
 }
 
 /**
- * Project state persisted in localStorage.
+ * All projects, persisted in localStorage, with one active project.
  * `ready` is false until the stored copy has been read (avoids a hydration mismatch).
  */
-export function useProject() {
-  const [project, setProject] = useState<Project>(() => seedProject());
+export function useWorkspace() {
+  const [ws, setWs] = useState<Workspace>(() => {
+    const p = seedProject();
+    return { projects: [p], activeId: p.id };
+  });
   const [ready, setReady] = useState(false);
   const skipSave = useRef(true);
 
   useEffect(() => {
-    setProject(load());
+    setWs(load());
     setReady(true);
   }, []);
 
@@ -75,22 +43,68 @@ export function useProject() {
       return;
     }
     try {
-      window.localStorage.setItem(KEY, JSON.stringify(project));
+      window.localStorage.setItem(KEY, JSON.stringify(ws));
     } catch {
       /* quota or private mode: keep working in memory */
     }
-  }, [project, ready]);
+  }, [ws, ready]);
 
-  /** Mutate a deep copy, so callers can write plain imperative updates. */
+  const project = ws.projects.find((p) => p.id === ws.activeId) ?? ws.projects[0];
+
+  /** Mutate a deep copy of the ACTIVE project with a plain imperative update. */
   const update = useCallback((fn: (draft: Project) => void) => {
-    setProject((prev) => {
-      const draft = structuredClone(prev);
-      fn(draft);
-      return draft;
+    setWs((prev) => ({
+      ...prev,
+      projects: prev.projects.map((p) => {
+        if (p.id !== prev.activeId) return p;
+        const draft = structuredClone(p);
+        fn(draft);
+        return draft;
+      }),
+    }));
+  }, []);
+
+  /** Replace the active project's contents (keeps its id). */
+  const replace = useCallback((next: Project) => {
+    setWs((prev) => ({
+      ...prev,
+      projects: prev.projects.map((p) =>
+        p.id === prev.activeId ? { ...normalizeProject(next), id: p.id } : p,
+      ),
+    }));
+  }, []);
+
+  /** Add a project (blank, or from an imported one) and switch to it. */
+  const addProject = useCallback((name?: string, from?: Project) => {
+    const p = from ? { ...normalizeProject(from), id: crypto.randomUUID() } : blankProject(name);
+    if (from && name) p.name = name;
+    setWs((prev) => ({ projects: [...prev.projects, p], activeId: p.id }));
+  }, []);
+
+  const selectProject = useCallback((id: string) => {
+    setWs((prev) => (prev.projects.some((p) => p.id === id) ? { ...prev, activeId: id } : prev));
+  }, []);
+
+  /** Delete a project. The last one is replaced by a blank project so there is always one. */
+  const deleteProject = useCallback((id: string) => {
+    setWs((prev) => {
+      const rest = prev.projects.filter((p) => p.id !== id);
+      if (rest.length === 0) {
+        const p = blankProject();
+        return { projects: [p], activeId: p.id };
+      }
+      return { projects: rest, activeId: prev.activeId === id ? rest[0].id : prev.activeId };
     });
   }, []);
 
-  const replace = useCallback((p: Project) => setProject(normalizeProject(p)), []);
-
-  return { project, update, replace, ready };
+  return {
+    project,
+    projects: ws.projects.map((p) => ({ id: p.id, name: p.name })),
+    update,
+    replace,
+    addProject,
+    selectProject,
+    deleteProject,
+    ready,
+  };
 }
