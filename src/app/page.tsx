@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Analytics from "@/components/Analytics";
 import SettingsPanel from "@/components/SettingsPanel";
@@ -78,7 +77,6 @@ export default function Home() {
   return (
     <div className="flex h-screen flex-col">
       <header className="flex flex-wrap items-center gap-2 border-b-4 border-[color:var(--accent)] bg-[color:var(--brand)] px-3 py-2 text-white">
-        <Image src="/kintiga-logo.png" alt="Kintiga" width={640} height={163} priority className="mr-2 h-9 w-auto" />
         <select
           aria-label="Project"
           className="min-w-[10rem] max-w-[22rem] flex-1 rounded border border-white/30 bg-transparent px-2 py-1 text-lg font-semibold text-white [&>option]:text-black"

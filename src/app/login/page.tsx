@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 
 export default function Login() {
@@ -38,14 +37,6 @@ export default function Login() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[color:var(--brand)] p-4 text-white">
       <div className="w-full max-w-sm">
-        <Image
-          src="/kintiga-logo.png"
-          alt="Kintiga"
-          width={640}
-          height={163}
-          priority
-          className="mx-auto mb-8 h-14 w-auto"
-        />
         <form onSubmit={submit} className="rounded-xl bg-[color:var(--brand-2)] p-6 shadow-xl">
           <h1 className="mb-1 text-xl font-semibold">Project Budget Tracker</h1>
           <p className="mb-5 text-sm text-white/70">Sign in to continue.</p>
